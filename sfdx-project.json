@@ -4,9 +4,14 @@
       "path": "force-app",
       "default": true,
       "package": "MoveData Package - Campaign Members",
-      "versionName": "ver 0.1",
-      "versionNumber": "0.1.0.NEXT",
-      "versionDescription": ""
+      "versionName": "Version 1.0.5",
+      "versionNumber": "1.0.5.NEXT",
+      "versionDescription": "",
+      "dependencies": [
+        {
+          "package": "MoveData"
+        }
+      ]
     }
   ],
   "name": "movedata-package-campaign-members",
@@ -14,6 +19,10 @@
   "sfdcLoginUrl": "https://login.salesforce.com",
   "sourceApiVersion": "57.0",
   "packageAliases": {
-    "MoveData Package - Campaign Members": "0Ho2t000000KyjBCAS"
+    "MoveData": "04t2w000009dawgAAA",
+    "MoveData Package - Campaign Members": "0Ho2t000000KyjBCAS",
+    "MoveData Package - Campaign Members@0.1.0-3": "04t2t000000cBWtAAM",
+    "MoveData Package - Campaign Members@1.0.4-1": "04t2t000000cBWyAAM",
+    "MoveData Package - Campaign Members@1.0.5-1": "04t2t000000cBX3AAM"
   }
 }

@@ -12,6 +12,8 @@ public class CampaignMemberInitialiseComponent {
     public class InitialiseCampaignMemberRequest {
 
         public InitialiseCampaignMemberRequest() {
+            this.ConfigList = new List<CampaignMemberStatusConfig>();
+            this.LogList = new List<movedata.MoveDataLogEntry>();
             this.DeleteOtherCampaignMemberStatuses = false;
             this.ContinueOnError = false;
         }
@@ -28,16 +30,55 @@ public class CampaignMemberInitialiseComponent {
         @InvocableVariable(label='Continue on Error' required=false)
         public Boolean ContinueOnError;
 
+        /**
+        * @description The list of log entries to append the entry to.
+        */
+        @InvocableVariable(label='List of Log Entries')
+        public List<movedata.MoveDataLogEntry> LogList;
+
     }
 
     public class InitialiseCampaignMemberResponse {
 
-        public InitialiseCampaignMemberResponse(Boolean cached) {
+        public InitialiseCampaignMemberResponse(List<movedata.MoveDataLogEntry> logList, Boolean cached) {
             this.Cached = cached;
+            this.LogList = (logList == null) ? new List<movedata.MoveDataLogEntry>() : logList;
+
+            if (cached == true) {
+                movedata.MoveDataLogEntry logEntry = new movedata.MoveDataLogEntry();
+                logEntry.Message = 'Initialise Campaign Members';
+                logEntry.Detail = 'cached';
+                this.LogList.add(logEntry);
+            }
+
+            // ------------------------------
+
+            // Append a JSON log entry to the response
+            List<Map<String, Object>> objectList = new List<Map<String, Object>>();
+            for (movedata.MoveDataLogEntry item : this.LogList) {
+                objectList.add(new Map<String, Object> {
+                    'message' => item.Message,
+                    'detail' => item.Detail
+                });
+            }
+
+            this.LogJson = JSON.serialize(objectList);
         }
 
         @InvocableVariable(label='Cached' description='Identifies if the campaign has previous been initialised in the current transaction')
         public Boolean Cached;
+
+        /**
+        * @description The list of log entries to append the entry to.
+        */
+        @InvocableVariable(label='List of Log Entries' required=true)
+        public List<movedata.MoveDataLogEntry> LogList;
+
+        /**
+        * @description A JSON-encoded version of the flow's log entries.
+        */
+        @InvocableVariable(label='Json Output of Log Entries')
+        public String LogJson;
 
     }
 
@@ -55,7 +96,9 @@ public class CampaignMemberInitialiseComponent {
         // Iterate the requests
 
         for (InitialiseCampaignMemberRequest request : requestList) {
-            if (CampaignMemberInitialiseComponent.initialisationCache.contains(request.CampaignId) == true) { responseList.add(new InitialiseCampaignMemberResponse(true)); continue; }
+            if (request.LogList == null) request.LogList = new List<movedata.MoveDataLogEntry>();
+
+            if (CampaignMemberInitialiseComponent.initialisationCache.contains(request.CampaignId) == true) { responseList.add(new InitialiseCampaignMemberResponse(request.LogList, true)); continue; }
             if (request.ConfigList == null) throw new ExtensionMalformedCallException('You must pass a list of Campaign Member Statuses.');
 
             // ------------------------------------------------------------------------------------------
@@ -122,9 +165,20 @@ public class CampaignMemberInitialiseComponent {
                 updateStatusList.add(record);
             }
 
+            // Create a log entry.
+            movedata.MoveDataLogEntry logEntry = new movedata.MoveDataLogEntry();
+            logEntry.Message = 'Initialise Campaign Members';
+            logEntry.Detail = JSON.serializePretty(new Map<String, Object> {
+                'updateList' => updateStatusList,
+                'deleteList' => deleteStatusList
+            });
+
+            // Append a structure MoveData Log Entry to the response
+            request.LogList.add(logEntry);
+
             // Mark as initialise in Cache and set response.
             CampaignMemberInitialiseComponent.initialisationCache.add(request.CampaignId);
-            responseList.add(new InitialiseCampaignMemberResponse(false));
+            responseList.add(new InitialiseCampaignMemberResponse(request.LogList, false));
         }
 
         // ------------------------------------------------------------------------------------------
